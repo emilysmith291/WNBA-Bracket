@@ -1,36 +1,74 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Final Say — 2026 WNBA Champion & MVP Predictor
 
-## Getting Started
+An interactive site for building a 2026 WNBA playoff bracket and voting for MVP,
+with live community results. Built with Next.js (App Router), shadcn/ui, and
+Supabase.
 
-First, run the development server:
+## Stack
+
+- **Next.js 16** (App Router, TypeScript, Tailwind v4)
+- **shadcn/ui** (Nova preset, Radix primitives)
+- **Supabase** (Postgres + RLS) for reference data (teams/players) and
+  anonymous, no-login predictions
+- Deployed on **Vercel**
+
+## Local setup
 
 ```bash
+npm install
+cp .env.example .env.local   # fill in your Supabase URL + anon key
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+The site renders fine with no `.env.local` at all — team/player data falls
+back to the bundled seed data in `src/lib/data`, you just won't be able to
+save predictions until Supabase is connected.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Supabase setup
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+1. Create a project at [supabase.com](https://supabase.com).
+2. Open **SQL Editor** → paste the contents of `supabase/schema.sql` → **Run**.
+   This creates the `teams`, `players`, `champion_predictions`, and
+   `mvp_predictions` tables, the RLS policies, the vote-count views, and
+   seeds the 2026-season data.
+3. Go to **Project Settings → API** and copy the **Project URL** and
+   **anon public key** into `.env.local` (see `.env.example`).
 
-## Learn More
+## Team logos & player photos
 
-To learn more about Next.js, take a look at the following resources:
+Team badges and player avatars fall back to a colored monogram in each
+team's brand colors if no image file is present, so the site always looks
+complete. Real images live in `public/` named by each entity's `id` (see
+`src/lib/data/teams.ts` / `players.ts` for the exact ids) — drop in a
+replacement with the same filename and it's picked up automatically, no
+code changes needed:
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+- `public/logos/{team-id}.png` — e.g. `public/logos/lva.png` for the Aces
+  (sourced from each team's official Wikipedia infobox logo)
+- `public/players/{player-id}.jpg` — e.g. `public/players/aja-wilson.jpg`
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+Team logos are trademarks, used here for identification only (nominative
+fair use), which is standard practice for fan/stat sites. Player photos
+are copyrighted images of real people — the ones currently in the repo
+were supplied directly rather than pulled from the web; if you swap in
+your own, make sure you have the rights to use them, especially before
+deploying this publicly.
 
-## Deploy on Vercel
+## Deploying to Vercel
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+1. Push this repo to GitHub.
+2. In Vercel, **Add New Project** → import the GitHub repo.
+3. Add the two env vars from `.env.local` under **Project Settings →
+   Environment Variables**.
+4. Deploy.
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+## Project structure
+
+```
+src/app/            # routes: / (home), /bracket, /mvp
+src/components/site  # app-specific components (bracket, MVP cards, vote bars…)
+src/components/ui    # shadcn/ui primitives
+src/lib/data          # static 2026 season seed data (teams, MVP candidates)
+src/lib/supabase       # Supabase client + row types
+supabase/schema.sql     # full DDL, RLS policies, and seed data
+```

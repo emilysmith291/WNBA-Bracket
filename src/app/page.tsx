@@ -1,69 +1,145 @@
-import Image from "next/image";
+import { ArrowRight, Sparkles, Trophy, Users } from "lucide-react";
+import Link from "next/link";
 
-export default function Home() {
+import { PlayerHeadshot } from "@/components/site/player-headshot";
+import { StandingsTable } from "@/components/site/standings-table";
+import { TeamBadge } from "@/components/site/team-badge";
+import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
+import { getChampionVoteCounts, getMvpVoteCounts, getPlayers, getTeams } from "@/lib/data/fetch";
+
+export default async function Home() {
+  const [teams, players, championVotes, mvpVotes] = await Promise.all([
+    getTeams(),
+    getPlayers(),
+    getChampionVoteCounts(),
+    getMvpVoteCounts(),
+  ]);
+
+  const playoffTeams = teams
+    .filter((t) => t.madePlayoffs)
+    .sort((a, b) => (a.overallSeed ?? 0) - (b.overallSeed ?? 0));
+
+  const totalChampionVotes = Object.values(championVotes).reduce((a, b) => a + b, 0);
+  const totalMvpVotes = Object.values(mvpVotes).reduce((a, b) => a + b, 0);
+  const teamsById = Object.fromEntries(teams.map((t) => [t.id, t]));
+
   return (
-    <div className="flex flex-col flex-1 items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex flex-1 w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert h-5 w-[100px]"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the{" "}
-            <code className="rounded bg-black/[.06] px-1.5 py-0.5 font-mono text-[0.9em] dark:bg-white/[.08]">
-              page.tsx
-            </code>{" "}
-            file.
+    <div>
+      {/* Hero */}
+      <section className="bg-arena relative overflow-hidden">
+        <div className="mx-auto flex max-w-6xl flex-col items-center gap-6 px-4 py-20 text-center sm:px-6 sm:py-28">
+          <span className="inline-flex items-center gap-1.5 rounded-full border border-border bg-background/60 px-3 py-1 text-xs font-medium text-muted-foreground backdrop-blur">
+            <Sparkles className="size-3.5 text-primary" />
+            2026 WNBA Playoffs tip off September 27
+          </span>
+          <h1 className="max-w-3xl text-4xl font-extrabold tracking-tight text-balance sm:text-6xl">
+            Who takes home the <span className="text-gradient-brand">trophy</span> this year?
           </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
+          <p className="max-w-xl text-lg text-muted-foreground text-balance">
+            Build your own playoff bracket, crown your MVP, and see how your picks compare to
+            everyone else calling their shot before the postseason starts.
           </p>
+          <div className="flex flex-col gap-3 sm:flex-row">
+            <Button asChild size="lg" className="rounded-full text-base">
+              <Link href="/bracket">
+                Build My Bracket <ArrowRight className="size-4" />
+              </Link>
+            </Button>
+            <Button asChild size="lg" variant="outline" className="rounded-full text-base">
+              <Link href="/mvp">
+                Pick My MVP <Trophy className="size-4" />
+              </Link>
+            </Button>
+          </div>
+
+          {(totalChampionVotes > 0 || totalMvpVotes > 0) && (
+            <p className="flex items-center gap-1.5 text-xs text-muted-foreground">
+              <Users className="size-3.5" />
+              {totalChampionVotes} champion picks &amp; {totalMvpVotes} MVP picks submitted so far
+            </p>
+          )}
         </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
+      </section>
+
+      {/* Playoff field teaser */}
+      <section className="mx-auto max-w-6xl px-4 py-16 sm:px-6">
+        <div className="mb-8 flex items-end justify-between gap-4">
+          <div>
+            <h2 className="text-2xl font-bold tracking-tight sm:text-3xl">The Playoff Field</h2>
+            <p className="mt-1 text-muted-foreground">
+              Eight teams clinched. One will cut down the nets.
+            </p>
+          </div>
+          <Link
+            href="/bracket"
+            className="hidden shrink-0 items-center gap-1 text-sm font-medium text-primary hover:underline sm:flex"
           >
-            <Image
-              className="dark:invert h-[14px] w-4"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={14}
-            />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
+            Predict it <ArrowRight className="size-3.5" />
+          </Link>
         </div>
-      </main>
+
+        <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+          {playoffTeams.map((team) => (
+            <Card
+              key={team.id}
+              className="flex flex-col items-center gap-3 border border-border/60 p-5 text-center transition-transform hover:-translate-y-0.5"
+            >
+              <TeamBadge team={team} size="lg" />
+              <div>
+                <p className="text-xs font-medium text-muted-foreground">#{team.overallSeed} seed</p>
+                <p className="text-sm font-semibold leading-tight">
+                  {team.city} {team.name}
+                </p>
+                <p className="text-xs text-muted-foreground">
+                  {team.wins}-{team.losses}
+                </p>
+              </div>
+            </Card>
+          ))}
+        </div>
+      </section>
+
+      {/* MVP teaser + standings */}
+      <section className="mx-auto grid max-w-6xl gap-8 px-4 py-4 sm:px-6 lg:grid-cols-5 lg:gap-10">
+        <div className="lg:col-span-3">
+          <h2 className="text-2xl font-bold tracking-tight sm:text-3xl">Full Standings</h2>
+          <p className="mt-1 mb-6 text-muted-foreground">
+            Regular season closes September 24.
+          </p>
+          <StandingsTable teams={teams} />
+        </div>
+
+        <div className="lg:col-span-2">
+          <h2 className="text-2xl font-bold tracking-tight sm:text-3xl">MVP Watch</h2>
+          <p className="mt-1 mb-6 text-muted-foreground">Top of the ballot right now.</p>
+          <div className="space-y-3">
+            {players.slice(0, 4).map((player, i) => (
+              <Card key={player.id} className="flex items-center gap-3 border border-border/60 p-3.5">
+                <div className="relative shrink-0">
+                  <PlayerHeadshot player={player} team={teamsById[player.teamId]} size="sm" />
+                  <span className="absolute -bottom-1 -right-1 flex size-4 items-center justify-center rounded-full bg-muted text-[9px] font-bold ring-2 ring-card">
+                    {i + 1}
+                  </span>
+                </div>
+                <div className="min-w-0 flex-1">
+                  <p className="truncate text-sm font-semibold leading-tight">{player.name}</p>
+                  <p className="text-xs text-muted-foreground">{player.accolade}</p>
+                </div>
+                <span className="shrink-0 text-right text-sm font-semibold tabular-nums">
+                  {player.ppg}
+                  <span className="ml-1 text-xs font-normal text-muted-foreground">ppg</span>
+                </span>
+              </Card>
+            ))}
+          </div>
+          <Button asChild variant="link" className="mt-2 px-0">
+            <Link href="/mvp">
+              See the full MVP ballot <ArrowRight className="size-3.5" />
+            </Link>
+          </Button>
+        </div>
+      </section>
     </div>
   );
 }
